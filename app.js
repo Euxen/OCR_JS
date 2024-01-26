@@ -3,7 +3,8 @@ let express = require("express"),
     app = express(),
     path = require('path'),
     multer = require('multer'),
-    { createWorker } = require('tesseract.js');
+    { createWorker } = require('tesseract.js'),
+    fs = require('fs');
 
     // const worker = await createWorker('eng');
 
@@ -35,10 +36,34 @@ let storage = multer.diskStorage({
         }
     }).single('userFile');
 
-    upload(req, res, function(err) {
-        res.end('File is uploaded')
-    })
-  })
+    upload(req, res, async function(err) {
+
+        // console.log(req);
+
+        const worker = await createWorker('eng', 1, {
+            logger: m => console.log(m), // Add logger here
+          });
+
+        (async () => {
+        const { data: { text } } = await worker.recognize(req.file.path);
+        // const progress = await worker.progress;
+        // console.log(progress)
+        console.log(text);
+        await worker.terminate();
+        })();
+
+        // res.send("It worked!")
+        res.redirect('file');
+
+
+        // fs.readFile(`./uploads/${req.file.path}`, (err, data) => {
+        //     if (err) return console.log("This is your error", err);
+
+        //     console.log(req)
+            
+        // });
+    });
+  });
    let port = process.env.PORT || 3000
    app.listen(port, function() {
     console.log('Node.js listening on port ' + port);
